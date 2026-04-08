@@ -10,41 +10,90 @@ Built with FastAPI, PostgreSQL, Celery + Redis, FAISS vector search, Sentence Tr
 
 Primary validation and release verification in this project are Docker-first.
 
-### Option 1: Docker (recommended, one command)
+### Option 1: Docker (recommended for beginners)
+
+Use this if you want everything to run with one command.
+
+1. Open terminal in this project folder.
+2. Run:
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-This starts PostgreSQL + Redis + Celery worker + the API server. Migrations run automatically. No manual steps.
+This starts PostgreSQL + Redis + Celery worker + API server and runs migrations automatically.
 
-The API is live at **http://localhost:8000**.
+API URL: **http://localhost:8000**
 
-### Option 2: Local Development (no Docker)
-
-This is optional and intended for development convenience only.
-
-You need Python 3.12 plus running PostgreSQL and Redis instances.
+Stop all services:
 
 ```bash
-# 1. Install dependencies
-pip install -e ".[dev]"
+docker compose down
+```
 
-# 2. Copy and edit environment variables
-cp .env.example .env
-# Edit .env: set DATABASE_URL to your local Postgres, set API_KEY, add your LLM key
+### Option 2: Local Development with Conda (no Docker)
 
-# 3. Run database migrations
+Use this if you want to run each service manually.
+
+You need:
+1. Python 3.12
+2. Conda (Miniconda or Anaconda)
+3. Local PostgreSQL and Redis running
+
+#### Windows PowerShell (copy-paste)
+
+```powershell
+# 1) Create and activate environment
+conda create -p .conda python=3.12 -y
+conda activate .\.conda
+
+# 2) Install app + dev dependencies
+python -m pip install -e ".[dev]"
+
+# 3) Create .env from template
+Copy-Item .env.example .env
+
+# 4) Edit .env with your values
+#    - DATABASE_URL (your local Postgres)
+#    - API_KEY
+#    - OPENAI_API_KEY (or Gemini values if using Gemini)
+
+# 5) Run migrations
 alembic upgrade head
+```
 
-# 4. Start Celery worker (separate terminal)
+Start worker and API in two separate terminals (same activated conda env):
+
+```powershell
+# Terminal A
+conda activate .\.conda
 celery -A app.queue.celery_app:celery_app worker --loglevel=INFO --pool=solo
+```
 
-# 5. Start the server
+```powershell
+# Terminal B
+conda activate .\.conda
 uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-The API is live at **http://127.0.0.1:8000**.
+API URL: **http://127.0.0.1:8000**
+
+#### macOS/Linux (copy-paste)
+
+```bash
+# 1) Create and activate environment
+conda create -p .conda python=3.12 -y
+conda activate ./.conda
+
+# 2) Install app + dev dependencies
+python -m pip install -e ".[dev]"
+
+# 3) Create .env from template
+cp .env.example .env
+
+# 4) Edit .env with your values, then run migrations
+alembic upgrade head
+```
 
 ### What to Open After Starting
 
@@ -280,14 +329,18 @@ Full descriptions and suggested questions: `sample_docs/README.md`
 ## Running Tests
 
 ```bash
-# Install dev dependencies first (if running locally)
-pip install -e ".[dev]"
+# If needed, activate environment first
+# Windows PowerShell: conda activate .\.conda
+# macOS/Linux:       conda activate ./.conda
+
+# Install dev dependencies (first time only)
+python -m pip install -e ".[dev]"
 
 # Run all tests
 python -m pytest
 
-# Run with verbose output
-python -m pytest -v
+# Run in current default mode from config (verbose)
+python -m pytest
 ```
 
 Tests use SQLite in-memory — no PostgreSQL needed. Current suite:
