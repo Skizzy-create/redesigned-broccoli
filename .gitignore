@@ -11,3 +11,5 @@ __pycache__/
 *.db
 .playwright-mcp/
 artifacts/
+data/uploads/*_sample.pdf
+data/uploads/*_smoke_test.pdf
